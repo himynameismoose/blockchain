@@ -1,13 +1,37 @@
 import com.google.gson.GsonBuilder;
 
+import java.security.Security;
 import java.util.ArrayList;
 
 public class BlockChain {
 
     public static ArrayList<Block> blockchain = new ArrayList<>();
     public static int difficulty = 5;
+    public static Wallet walletA;
+    public static Wallet walletB;
 
     public static void main(String[] args) {
+        // Setup Bouncy Castle as a security Provider
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
+        // Create wallets
+        walletA = new Wallet();
+        walletB = new Wallet();
+
+        // Test public and private keys
+        System.out.println("Private and public keys:");
+        System.out.println(StringUtil.getStringFromKey(walletA.privateKey));
+        System.out.println(StringUtil.getStringFromKey(walletA.publicKey));
+
+        // Create a test transaction from walletA to walletB
+        Transaction transaction = new Transaction(walletA.publicKey, walletB.publicKey, 5, null);
+        transaction.generateSignature(walletA.privateKey);
+
+        // Verify the signature works and verify it from the public key
+        System.out.println("Is signature verified: " + transaction.verifySignature());
+    }
+
+    public static void blockchainTest() {
         // Add blocks to blockchain ArrayList
         blockchain.add(new Block("Hi, I'm the first block", "0"));
         System.out.println("Trying to Mine Block 1...");
