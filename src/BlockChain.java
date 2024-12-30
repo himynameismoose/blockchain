@@ -64,6 +64,8 @@ public class BlockChain {
         Block currentBlock;
         Block previousBlock;
         String hashTarget = new String(new char[difficulty]).replace('\0', '0');
+        HashMap<String, TransactionOutput> tempUTXOs = new HashMap<>();
+        tempUTXOs.put(genesisTransaction.outputs.get(0).id, genesisTransaction.outputs.get(0));
 
         // Loop through blockchain to check hashes
         for (int i = 1; i < blockchain.size(); i++) {
@@ -86,6 +88,52 @@ public class BlockChain {
             if (!currentBlock.hash.substring(0, difficulty).equals(hashTarget)) {
                 System.out.println("This block hasn't been mined");
                 return false;
+            }
+
+            // Loop through blockchain transactions
+            TransactionOutput tempOutput;
+
+            for (int t = 0; t < currentBlock.transactions.size(); t++) {
+                Transaction currentTransaction = currentBlock.transactions.get(t);
+
+                if (!currentTransaction.verifySignature()) {
+                    System.out.println("Signature on Transaction(" + t + ") is invalid");
+                    return false;
+                }
+
+                if (currentTransaction.getInputsValue() != currentTransaction.getOutputsValue()) {
+                    System.out.println("Inputs are not equal to outputs on Transaction(" + t + ")");
+                    return false;
+                }
+
+                for (TransactionInput input : currentTransaction.inputs) {
+                    tempOutput = tempUTXOs.get(input.transactionOutputId);
+
+                    if (tempOutput == null) {
+                        System.out.println("Referenced input on Transaction(" + t + ") is missing");
+                        return false;
+                    }
+
+                    if (input.UTXO.value != tempOutput.value) {
+                        System.out.println("Referenced input Transaction(" + t + ") is invalid");
+                    }
+
+                    tempUTXOs.remove(input.transactionOutputId);
+                }
+
+                for (TransactionOutput output : currentTransaction.outputs) {
+                    tempUTXOs.put(output.id, output);
+                }
+
+                if (currentTransaction.outputs.get(0).recipient != currentTransaction.recipient) {
+                    System.out.println("Transaction(" + t + ") output recipient does not match");
+                    return false;
+                }
+
+                if (currentTransaction.outputs.get(1).recipient != currentTransaction.sender) {
+                    System.out.println("Transaction(" + t + ") output 'change' is not sender");
+                    return false;
+                }
             }
         }
 
