@@ -1,7 +1,4 @@
-import java.security.Key;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.Signature;
+import java.security.*;
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -46,6 +43,19 @@ public class StringUtil {
         }
 
         return output;
+    }
+
+    // Verify String signature
+    public static boolean verifyECDSASig(PublicKey publicKey, String data, byte[] signature) {
+        try {
+            Signature ecdsaVerify = Signature.getInstance("ECDSA", "BC");
+            ecdsaVerify.initVerify(publicKey);
+            ecdsaVerify.update(data.getBytes());
+
+            return ecdsaVerify.verify(signature);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getStringFromKey(Key key) {
